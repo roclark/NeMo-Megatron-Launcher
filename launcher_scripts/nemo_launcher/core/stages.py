@@ -1386,7 +1386,13 @@ def create_args_list(hydra: bool = False, replace_underscore: bool = True, **kwa
     args = []
     for k, v in kwargs.items():
         if hydra:
-            args.append(f"{k}={v}")
+            # ListConfigs are not parsable by Hydra while executing a generated script
+            if isinstance(v, omegaconf.listconfig.ListConfig):
+                inp_list = OmegaConf.to_object(v)
+                converted_str = ','.join(map(str, inp_list))
+                args.append(f"{k}=\\'{converted_str}\\'")
+            else:
+                args.append(f"{k}={v}")
         else:
             # use "store_true" to add keys only args
             if replace_underscore:
