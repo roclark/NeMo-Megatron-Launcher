@@ -29,3 +29,6 @@ trainingConfig:
 
   # Insert the dnsPolicy #
   dnsPolicy: "nil"
+
+  # Specify the path to the pre-training script #
+  scriptPath: <Insert path to pre-training script>

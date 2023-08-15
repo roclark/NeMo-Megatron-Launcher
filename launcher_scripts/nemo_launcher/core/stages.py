@@ -590,15 +590,16 @@ class NeMoStage(NemoMegatronStage):
         :param str template_root: path to where the k8s template files are located
         :param JobPaths job_path: JobPaths object
         """
-        template_file = os.path.join(template_root, 'training.yaml')
+        filename = f'{self.stage_name}.yaml'
+        template_file = os.path.join(template_root, filename)
         chart_file = os.path.join(template_root, 'Chart.yaml')
-        training_path = Path(job_path.folder / 'k8s_template' / 'templates' / 'training.yaml')
+        training_path = Path(job_path.folder / 'k8s_template' / 'templates' / filename)
         training_path.parent.mkdir(parents=True, exist_ok=True)
         config_path = Path(job_path.folder / 'k8s_template' / 'config')
         config_path.mkdir(parents=True, exist_ok=True)
         chart_path = Path(job_path.folder / 'k8s_template' / 'Chart.yaml')
-        training_config_file = os.path.join(template_root, 'training-config.yaml')
-        training_config_path = Path(job_path.folder / 'k8s_template' / 'templates' / 'training-config.yaml')
+        training_config_file = os.path.join(template_root, f'{self.stage_name}-config.yaml')
+        training_config_path = Path(job_path.folder / 'k8s_template' / 'templates' / f'{self.stage_name}-config.yaml')
         hydra_config_path = Path(job_path.folder / 'k8s_template' / 'config')
 
         shutil.copy2(template_file, training_path)
@@ -629,6 +630,8 @@ class NeMoStage(NemoMegatronStage):
         with open(os.path.join(template_root, 'values.yaml')) as value_file:
             values_template = OmegaConf.load(value_file)
 
+        choice_model_type, _ = self.get_stage_config_choice()
+
         values_template.image.trainingImage = cluster_parameters['container_image']
         values_template.image.pullSecret = cluster_parameters['pull_secret']
         values_template.image.numGPUs = self.stage_cfg.trainer.devices
@@ -639,9 +642,35 @@ class NeMoStage(NemoMegatronStage):
         values_template.trainingConfig.ibResourceName = cluster_parameters['ib_resource_name']
         values_template.trainingConfig.ibCount = cluster_parameters['ib_count']
         values_template.trainingConfig.envVars = cluster_parameters['env_vars']
+        values_template.trainingConfig.scriptPath = str(self._get_nemo_code_path(choice_model_type))
 
         if cluster_parameters['dns_policy'] is not None:
             values_template.trainingConfig.dnsPolicy = cluster_parameters['dns_policy']
+
+        if self.stage_name == 'evaluation':
+            num_gpus = self.cfg.evaluation.model.pipeline_model_parallel_size * self.cfg.evaluation.model.tensor_model_parallel_size
+
+            values_template.image.gpuNum = num_gpus
+            values_template.trainingConfig.vocabPath = self.cfg.evaluation.model.get('vocab_file', None)
+            values_template.trainingConfig.mergesPath = self.cfg.evaluation.model.get('merge_file', None)
+            values_template.trainingConfig.resultsDirectory = str(job_path.folder)
+            values_template.trainingConfig.trainingDirectory = self.cfg.evaluation.run.get('train_dir', None)
+            values_template.trainingConfig.launcherScriptsPath = self.cfg.launcher_scripts_path
+            values_template.trainingConfig.tensorParallelism = self.cfg.evaluation.model.tensor_model_parallel_size
+            values_template.trainingConfig.pipelineParallelism = self.cfg.evaluation.model.pipeline_model_parallel_size
+            values_template.trainingConfig.name = self.cfg.evaluation.run.name
+            values_template.trainingConfig.model = self.cfg.evaluation.model.get('model_type', None)
+            values_template.trainingConfig.cacheDir = os.path.join(self.cfg.data_dir, 'eval_harness_data')
+            values_template.trainingConfig.outputPath = os.path.join(self.cfg.evaluation.run.results_dir,
+                                                                     self.cfg.evaluation.run.name,
+                                                                     'results')
+            values_template.trainingConfig.batchSize = self.cfg.evaluation.model.data.validation_ds.global_batch_size
+            values_template.trainingConfig.precision = self.cfg.evaluation.trainer.precision
+            values_template.trainingConfig.nemoModel = self.cfg.evaluation.model.restore_from_path
+            values_template.trainingConfig.checkpointFolder = self.cfg.evaluation.model.pretrained_checkpoint.checkpoint_dir
+            values_template.trainingConfig.checkpointName = self.cfg.evaluation.model.pretrained_checkpoint.checkpoint_name
+            values_template.trainingConfig.hparamsFile = self.cfg.evaluation.model.pretrained_checkpoint.hparams_file
+            values_template.trainingConfig.tasks = self.cfg.evaluation.run.task_name
 
         if self.cfg.wandb_api_key_file is not None:
             values_template.trainingConfig.wandbKey = self._add_wandb_key_to_chart()
@@ -999,6 +1028,7 @@ class Conversion(NemoMegatronStage):
         values_template.trainingConfig.tensorParallelism = self.cfg.conversion.model.tensor_model_parallel_size
         values_template.trainingConfig.pipelineParallelism = self.cfg.conversion.model.pipeline_model_parallel_size
         values_template.trainingConfig.envVars = cluster_parameters['env_vars']
+        values_template.trainingConfig.modelType = self.stage_cfg.model.model_type
 
         if cluster_parameters['dns_policy'] is not None:
             values_template.trainingConfig.dnsPolicy = cluster_parameters['dns_policy']

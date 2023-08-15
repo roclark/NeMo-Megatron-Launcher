@@ -27,13 +27,13 @@ spec:
               - "--rdzv-backend=c10d"
               - "--rdzv-endpoint=nlp-training-worker-0"
               - "--nproc_per_node={{ .Values.image.numGPUs }}"
-              - "/opt/NeMo/examples/nlp/language_modeling/megatron_gpt_pretraining.py"
+              - "{{ $config.scriptPath }}"
               - "--config-path=/config"
               - "--config-name=config.yaml"
             {{ else }}
             command: ["bash", "-c"]
             args:
-              - "wandb login {{ $config.wandbKey }} && torchrun --nnodes={{ .Values.image.nodes }} --rdzv-backend=c10d --rdzv-endpoint=nlp-training-worker-0 --nproc_per_node={{ .Values.image.numGPUs }} /opt/NeMo/examples/nlp/language_modeling/megatron_gpt_pretraining.py --config-path=/config --config-name=config.yaml"
+              - "wandb login {{ $config.wandbKey }} && torchrun --nnodes={{ .Values.image.nodes }} --rdzv-backend=c10d --rdzv-endpoint=nlp-training-worker-0 --nproc_per_node={{ .Values.image.numGPUs }} {{ $config.scriptPath }} --config-path=/config --config-name=config.yaml"
             {{ end }}
             imagePullPolicy: Always
             securityContext:

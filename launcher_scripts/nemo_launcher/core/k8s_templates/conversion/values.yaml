@@ -41,3 +41,6 @@ trainingConfig:
 
   # Insert the dnsPolicy #
   dnsPolicy: "nil"
+
+  # Insert the model type to convert #
+  modelType: <Insert model type>

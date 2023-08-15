@@ -22,7 +22,7 @@ spec:
           - 'export CKPT_NAME=$(python3 {{ $config.launcherScriptsPath }}/nemo_launcher/collections/checkpoint_search.py checkpoint_folder={{ $config.trainingDirectory }}/results/checkpoints checkpoint_name=latest tensor_model_parallel_size=1 pipeline_model_parallel_size=1) &&
           echo ${CKPT_NAME} &&
           python3 {{ $config.launcherScriptsPath }}/nemo_launcher/collections/hparams_override.py hparams_file={{ $config.trainingDirectory }}/results/hparams.yaml output_path={{ $config.resultsDirectory }}/results vocab_file={{ $config.vocabPath }} merge_file={{ $config.mergesPath }} tokenizer_model=None &&
-          python3 /opt/NeMo/examples/nlp/language_modeling/megatron_ckpt_to_nemo.py --gpus_per_node=1 --model_type=gpt --checkpoint_folder={{ $config.trainingDirectory }}/results/checkpoints --checkpoint_name=${CKPT_NAME} --hparams_file={{ $config.resultsDirectory }}/results/hparams_override.yaml --nemo_file_path={{ $config.resultsDirectory }}/megatron_gpt.nemo --tensor_model_parallel_size={{ $config.tensorParallelism }} --pipeline_model_parallel_size={{ $config.pipelineParallelism }}'
+          python3 /opt/NeMo/examples/nlp/language_modeling/megatron_ckpt_to_nemo.py --gpus_per_node=1 --model_type={{ $config.modelType }} --checkpoint_folder={{ $config.trainingDirectory }}/results/checkpoints --checkpoint_name=${CKPT_NAME} --hparams_file={{ $config.resultsDirectory }}/results/hparams_override.yaml --nemo_file_path={{ $config.resultsDirectory }}/megatron_{{ $config.modelType }}.nemo --tensor_model_parallel_size={{ $config.tensorParallelism }} --pipeline_model_parallel_size={{ $config.pipelineParallelism }}'
         imagePullPolicy: Always
         resources:
           requests:
