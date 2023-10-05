@@ -1,0 +1,63 @@
+{{ $config := .Values.trainingConfig }}
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: nlp-peft
+  labels:
+    app: nlp-peft
+spec:
+  template:
+    spec:
+      containers:
+      - name: nlp-peft
+        image: {{ .Values.image.trainingImage }}
+        env:
+          {{- range $key, $value := $config.envVars }}
+          - name: {{ $key }}
+            value: {{ $value | quote }}
+          {{- end}}
+        command: ["/bin/bash", "-c"]
+        args:
+          - 'cd /opt/NeMo;
+          git rev-parse HEAD;
+          export PYTHONPATH=/opt/NeMo:\${PYTHONPATH};
+          {{ if ne $config.wandbKey "nil" }}
+          wandb login {{ $config.wandbKey }} &&
+          {{ end }}
+          CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 python3 {{ $config.scriptPath }} --config-path=/config --config-name=config.yaml'
+        imagePullPolicy: Always
+        resources:
+          requests:
+            nvidia.com/gpu: {{ .Values.image.gpuNum }}
+          limits:
+            nvidia.com/gpu: {{ .Values.image.gpuNum }}
+        volumeMounts:
+        - mountPath: {{ $config.NFSPath }}
+          name: workspace
+        - mountPath: /dev/shm
+          name: dshm
+        - mountPath: /config
+          name: peft-config
+      restartPolicy: Never
+      imagePullSecrets:
+      - name: {{ .Values.image.pullSecret }}
+
+      volumes:
+      - name: workspace
+        nfs:
+          server: {{ $config.NFSServer }}
+          path: {{ $config.NFSPath }}
+
+      - name: dshm
+        emptyDir:
+          medium: Memory
+          sizeLimit: {{ $config.shmSize }}
+
+      - configMap:
+          name: peft-config
+        name: peft-config
+
+      {{ if ne $config.dnsPolicy "nil" }}
+      dnsPolicy: {{ $config.dnsPolicy }}
+      {{ end }}
