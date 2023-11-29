@@ -14,9 +14,9 @@
 
 import os
 import re
+import requests
 
 import torch
-from best_download import download_file
 from lm_eval.base import PerplexityTask
 from lm_eval.utils import sh
 
@@ -75,10 +75,12 @@ class WikiText(PerplexityTask):
                 cache_dir + "/wikitext/wikitext-2-raw/wiki.valid.raw"
             ):
                 os.makedirs(cache_dir + "/wikitext", exist_ok=True)
-                download_file(
-                    "https://s3.amazonaws.com/research.metamind.io/wikitext/wikitext-2-raw-v1.zip",
-                    local_file=cache_dir + "/wikitext/wikitext-2-raw-v1.zip",
-                    expected_checksum="ef7edb566e3e2b2d31b29c1fdb0c89a4cc683597484c3dc2517919c615435a11",
+
+                with open(cache_dir + "/wikitext/wikitext-2-raw-v1.zip", "w") as wikitext_file:
+                    response = requests.get("https://s3.amazonaws.com/research.metamind.io/wikitext/wikitext-2-raw-v1.zip")
+                    wikitext_file.write(response)
+                sh(
+                   'echo "ef7edb566e3e2b2d31b29c1fdb0c89a4cc683597484c3dc2517919c615435a11 data/wikitext/wikitext-2-raw-v1.zip" | sha256sum --check'
                 )
                 sh(f"cd {cache_dir}/wikitext && unzip wikitext-2-raw-v1.zip")
 
@@ -149,9 +151,13 @@ class WikiText103(WikiText):
                 cache_dir + "/wikitext/wikitext-103-raw/wiki.valid.raw"
             ):
                 os.makedirs(cache_dir + "/wikitext", exist_ok=True)
-                download_file(
-                    "https://s3.amazonaws.com/research.metamind.io/wikitext/wikitext-103-raw-v1.zip",
-                    local_file=cache_dir + "/wikitext/wikitext-103-raw-v1.zip",
+
+                with open(cache_dir + "/wikitext/wikitext-103-raw-v1.zip") as wikitext_file:
+                    response = requests.get("https://s3.amazonaws.com/research.metamind.io/wikitext/wikitext-103-raw-v1.zip")
+                    wikitext_file.write(response)
+
+                sh(
+                    'echo "91c00ae287f0d699e18605c84afc9e45c192bc6b7797ff8837e5474655a33794 data/wikitext/wikitext-103-raw-v1.zip" | sha256sum --check'
                 )
                 sh(f"cd {cache_dir}/wikitext && unzip wikitext-103-raw-v1.zip")
 
