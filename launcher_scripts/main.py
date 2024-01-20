@@ -22,6 +22,7 @@ from nemo_launcher.core.data_stages import (
     CustomDataPreparation,
     MC4DataPreparation,
     PileDataPreparation,
+    SlimPajamaDataPreparation,
     SteerLMDataPreparation,
 )
 from nemo_launcher.core.export_stages import Export
@@ -83,6 +84,7 @@ STR2STAGECLASS = {
         PileDataPreparation: ["gpt3", "t5", "bert", "llama", "falcon"],
         MC4DataPreparation: ["mt5"],
         SteerLMDataPreparation: ["steerlm"],
+        SlimPajamaDataPreparation: ["gpt3"],
         CustomDataPreparation: ["generic"],
     },
     "rlhf_rm": RLHFRewardModel,
@@ -103,9 +105,16 @@ def main(cfg):
             stage_config_choice = cfg.get(f"{stage_name}_config")
             choice_model_type = stage_config_choice.rsplit("/", 1)[0]
             for cls, model_types in stage_class.items():
+                choice_stage_type = stage_config_choice.rsplit("/", 1)[1]
                 if choice_model_type in model_types:
-                    stage_class = cls
+                    if "slim_pajama" in choice_stage_type and "SlimPajama" in str(cls):
+                        stage_class = cls
+                    elif "slim_pajama" in choice_stage_type and "SlimPajama" not in str(cls):
+                        continue
+                    else:
+                        stage_class = cls
                     break
+
 
         if dependency is not None:
             cfg[stage_name]["run"]["dependency"] = dependency

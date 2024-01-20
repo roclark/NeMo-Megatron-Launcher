@@ -1,0 +1,23 @@
+run:
+  name: download_gpt3_slim_pajama
+  results_dir: ${base_results_dir}/${.name}
+  time_limit: "4:00:00"
+  dependency: "singleton"
+  nodes: 30
+  procs_per_node: 48
+
+dataset: slim_pajama
+download_slim_pajama: True  # Whether to download the Slim Pajama dataset from the internet.
+concatenate_files: True  # Whether to concatenate small individual shards to larger chunks for efficiency.
+slim_pajama_url: "https://huggingface.co/datasets/cerebras/SlimPajama-627B/resolve/main/train/"  # Source URL to download the Slim Pajama dataset from.
+shards: "6000"  # The maximum number of individual shards to pull from each chunk in the Slim Pajama dataset
+chunks: "1-10"  # The Slim Pajama dataset consists of 10 chunks (1-10), each containing thousands of data files, choose which ones to download.
+shards_per_file: 1000  # The number of inidividual shards to concatenate into a single, large file for efficiency.
+preprocess_data: True  # True to preprocess the data from a jsonl file, False otherwise.
+download_vocab_url: "https://huggingface.co/gpt2/resolve/main/vocab.json"  # URL to download the vocab from.
+download_merges_url: "https://huggingface.co/gpt2/resolve/main/merges.txt"  # URL to download the merges from.
+vocab_save_dir: ${data_dir}/bpe
+merges_save_dir: ${data_dir}/bpe
+tokenizer_type: GPT2BPETokenizer
+rm_downloaded: True # Extract script will remove downloaded zst after extraction
+rm_extracted: True # Preprocess script will remove extracted files after preproc.

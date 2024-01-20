@@ -1,0 +1,15 @@
+data_config: download_gpt3_pile
+cluster_type: bcm
+launcher_scripts_path: null
+data_dir: null
+slim_pajama_url: null
+shards: null
+chunks: null
+shards_per_file: null
+rm_downloaded: True
+rm_extracted: True
+tokenizer_type: null
+vocab_save_dir: null
+merges_save_dir: null
+tokenizer_library: null
+tokenizer_model: null

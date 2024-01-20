@@ -408,6 +408,141 @@ class PileDataPreparation(DataStage):
         return [sub_stage_command]
 
 
+class SlimPajamaDataPreparation(DataStage):
+    """DataStage for preparing the Slim Pajama dataset for gpt3 and t5"""
+
+    def _make_sub_stages(self) -> List[str]:
+        """
+        Create a list of sub-stage names which are required to run in current data stage.
+        Based on the input config, some of sub stages may not need to run.
+
+        :return: a list of sub-stage names which are required to run
+        :rtype: List[str]
+        """
+        sub_stages = []
+        if self.stage_cfg.get("download_slim_pajama", False):
+            sub_stages += ["download", "extract"]
+        if self.stage_cfg.get("concatenate_files", False):
+            sub_stages += ["concatenate"]
+        if self.stage_cfg.get("preprocess_data", False):
+            sub_stages += ["preprocess"]
+        return sub_stages
+
+    def setup_folder_and_data(self) -> None:
+        """Setup job/data folders and fine-tuning/prompt-learning dataset"""
+        job_path = self.get_job_path()
+        job_path.folder.mkdir(parents=True, exist_ok=True)
+
+        data_cfg = self.stage_cfg
+        download_vocab_url = data_cfg.get("download_vocab_url")
+        download_merges_url = data_cfg.get("download_merges_url")
+        vocab_save_dir = data_cfg.get("vocab_save_dir")
+        merges_save_dir = data_cfg.get("merges_save_dir")
+        download_tokenizer_url = data_cfg.get("download_tokenizer_url")
+        tokenizer_save_dir = data_cfg.get("tokenizer_save_dir")
+
+        if download_tokenizer_url is not None:
+            assert (
+                tokenizer_save_dir is not None
+            ), "tokenizer_save_dir must be a valid path."
+            download_single_file(
+                url=download_tokenizer_url,
+                save_dir=tokenizer_save_dir,
+                file_name="llama_tokenizer.model",
+            )
+
+        # Download vocab
+        if download_vocab_url is not None:
+            assert vocab_save_dir is not None, "vocab_save_dir must be a valid path."
+            download_single_file(
+                url=download_vocab_url,
+                save_dir=vocab_save_dir,
+                file_name="vocab.json"
+                if download_vocab_url.endswith("json")
+                else "vocab.txt",
+            )
+        # Download merges
+        if download_merges_url is not None:
+            assert merges_save_dir is not None, "merges_save_dir must be a valid path."
+            download_single_file(
+                url=download_merges_url,
+                save_dir=merges_save_dir,
+                file_name="merges.txt",
+            )
+
+    def _make_private_cluster_parameters(self, cluster: str, sub_stage: str) -> Dict:
+        """
+        A simplifying function to make cluster parameters specific to each cluster type.
+        Shared cluster parameters are handled in _make_cluster_parameters.
+        This is function is introduced because for different dataset preparation the required slurm params are different,
+            but the shared parameters are always the same. As a result, one only needs to override private parameters
+            for different DataStage.
+
+        :param str cluster: cluster type
+        :param str sub_stage: current sub_stage name
+        :return: a dictionary of private cluster parameters, e.g. `bcp_preproc_npernode`
+        :rtype: Dict
+        """
+        cfg = self.cfg
+        stage_cfg = self.stage_cfg
+        run_cfg = stage_cfg.get("run")
+
+        container_image = cfg.get("container")
+        container_mounts = self._make_container_mounts_string()
+
+        if cluster == "bcm":
+            return {
+                "nodes": run_cfg.get("nodes"),
+                "ntasks_per_node": run_cfg.get("procs_per_node"),
+                "container_image": container_image,
+                "container_mounts": container_mounts,
+            }
+        if cluster == "bcp":
+            return {
+                "nodes": node_array_size,
+                "ntasks_per_node": run_cfg.get("procs_per_node"),
+            }
+        return {}
+
+    def _make_sub_stage_command(self, sub_stage: str) -> List[str]:
+        """Make a command of the specified sub-stage"""
+
+        slim_pajama_prep_path = (
+            self._launcher_scripts_path
+            / "nemo_launcher/collections/dataprep_scripts/slim_pajama_dataprep"
+        )
+        stage_to_code_path = {
+            "download": slim_pajama_prep_path / "download.py",
+            "extract": slim_pajama_prep_path / "extract.py",
+            "concatenate": slim_pajama_prep_path / "concat.py",
+            "preprocess": slim_pajama_prep_path / "preprocess.py",
+        }
+        choice_model_type, choice_name = self.get_stage_config_choice()
+
+        code_path = stage_to_code_path[sub_stage]
+        args = create_args_list(
+            hydra=True,
+            data_config=choice_name,
+            cluster_type=self.cluster,
+            launcher_scripts_path=self._launcher_scripts_path,
+            data_dir=self._data_dir,
+            slim_pajama_url=self.stage_cfg.get("slim_pajama_url"),
+            shards=self.stage_cfg.get("shards"),
+            chunks=self.stage_cfg.get("chunks"),
+            shards_per_file=self.stage_cfg.get("shards_per_file"),
+            rm_downloaded=self.stage_cfg.get("rm_downloaded"),
+            rm_extracted=self.stage_cfg.get("rm_extracted"),
+            tokenizer_type=self.stage_cfg.get("tokenizer_type"),
+            tokenizer_library=self.stage_cfg.get("tokenizer_library", "megatron"),
+            tokenizer_model=self.stage_cfg.get("tokenizer_model", None),
+            vocab_save_dir=self.stage_cfg.get("vocab_save_dir"),
+            merges_save_dir=self.stage_cfg.get("merges_save_dir"),
+        )
+        sub_stage_command = [f"python3 -u {code_path}", *args]
+        sub_stage_command = " \\\n  ".join(sub_stage_command)
+        return [sub_stage_command]
+
+
 class MC4DataPreparation(DataStage):
     """DataStage for preparing the mC4 dataset for mt5"""
 
