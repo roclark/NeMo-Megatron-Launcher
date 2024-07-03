@@ -201,6 +201,17 @@ class NemoMegatronStage:
             wandb_cmd = f"wandb login {wandb_api_key}"
         return [wandb_cmd]
 
+    def _make_hf_login_command(self) -> List[str]:
+        """Make a command of login with HF API token"""
+        cfg = self.cfg
+        hf_cmd = ""
+
+        if cfg.huggingface_token_file is not None:
+            with open(cfg.huggingface_token_file, "r") as f:
+                hf_token = f.readline().rstrip()
+            hf_cmd = f"huggingface-cli login --token {hf_token}"
+        return [hf_cmd]
+
     def _make_nemo_path_command(self) -> List[str]:
         """Extend nemo path to python path"""
         return [
@@ -621,6 +632,7 @@ class NeMoStage(NemoMegatronStage):
         # Shared with fine-tuning and prompt learning
         command_groups = [[]]
         command_groups[0] += self._make_wandb_login_command()
+        command_groups[0] += self._make_hf_login_command()
         command_groups[0] += self._make_nemo_path_command()
         command_groups[0] += self._make_git_log_command(stage_cfg_path)
         # command_groups[0] += self._make_numa_mapping_command()
@@ -1337,6 +1349,7 @@ class RAGIndexing(NeMoStage):
         # Shared with fine-tuning and prompt learning
         command_groups = [[]]
         command_groups[0] += self._make_wandb_login_command()
+        command_groups[0] += self._make_hf_login_command()
         command_groups[0] += self._make_nemo_path_command()
         command_groups[0] += self._make_git_log_command(stage_cfg_path)
         # command_groups[0] += self._make_numa_mapping_command()
@@ -1401,6 +1414,7 @@ class RAGGenerating(NeMoStage):
         # Shared with fine-tuning and prompt learning
         command_groups = [[]]
         command_groups[0] += self._make_wandb_login_command()
+        command_groups[0] += self._make_hf_login_command()
         command_groups[0] += self._make_nemo_path_command()
         command_groups[0] += self._make_git_log_command(stage_cfg_path)
         # command_groups[0] += self._make_numa_mapping_command()

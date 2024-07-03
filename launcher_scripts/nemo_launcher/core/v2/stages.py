@@ -94,6 +94,7 @@ class Training(Stage):
     gpus_per_worker: int
     nemo_train_script: str = "examples/nlp/language_modeling/megatron_gpt_pretraining.py"
     wandb_api_key: Optional[str] = None
+    hf_token: Optional[str] = None
     stage_name: ClassVar[str] = "training"
 
     @classmethod
@@ -135,6 +136,7 @@ class Training(Stage):
             gpus_per_worker=stage_cfg.trainer.devices,
             nemo_train_script=model_type_to_code_path[choice_model_type],
             wandb_api_key=cfg.wandb_api_key_file,
+            hf_token=cfg.huggingface_token_file,
         )
 
     def make_k8s_workflow(self) -> Workflow:
@@ -178,6 +180,7 @@ cd /opt/NeMo
 nvidia-smi
 export PYTHONPATH=/opt/NeMo:${{PYTHONPATH}}
 {('wandb login ' + self.wandb_api_key) if self.wandb_api_key else ''}
+{('huggingface-cli login ' + self.hf_token) if self.hf_token else ''}
 torchrun {self.nemo_train_script} --config-path=/config --config-name=config.yaml
                     """,
                 ],
@@ -200,6 +203,7 @@ class PEFT(Stage):
     launcher_download_module: str = "nemo_launcher.utils.data_utils.prepare_squad"
     nemo_train_script: str = "examples/nlp/language_modeling/tuning/megatron_gpt_peft_tuning.py"
     wandb_api_key: Optional[str] = None
+    hf_token: Optional[str] = None
     stage_name: ClassVar[str] = "peft"
 
     @classmethod
@@ -234,6 +238,7 @@ class PEFT(Stage):
             task_name=stage_cfg.run.task_name,
             nemo_train_script=model_type_to_code_path[choice_model_type],
             wandb_api_key=cfg.wandb_api_key_file,
+            hf_token=cfg.huggingface_token_file,
         )
 
     def make_k8s_workflow(self) -> Workflow:
@@ -297,6 +302,7 @@ cd /opt/NeMo
 nvidia-smi
 export PYTHONPATH=/opt/NeMo:${{PYTHONPATH}}
 {('wandb login ' + self.wandb_api_key) if self.wandb_api_key else ''}
+{('huggingface-cli login ' + self.hf_token) if self.hf_token else ''}
 torchrun {self.nemo_train_script} --config-path=/config --config-name=config.yaml
                     """,
                 ],
@@ -319,6 +325,7 @@ class PileDataPreparation(Stage):
     env: dict[str, Any]
     n_workers: int
     n_proc_per_worker: int
+    hf_token: Optional[str] = None
 
     # Set scripts to empty/None to skip the step
     download_script: Optional[
@@ -508,6 +515,7 @@ class RLHFPPO(Stage):
     critic_port: int = 5567
 
     wandb_api_key: Optional[str] = None
+    hf_token: Optional[str] = None
 
     critic_script: str = "/opt/NeMo-Aligner/examples/nlp/gpt/serve_ppo_critic.py"
     actor_script: str = "/opt/NeMo-Aligner/examples/nlp/gpt/train_gpt_ppo_actor.py"
@@ -530,6 +538,7 @@ class RLHFPPO(Stage):
             n_actor_workers=stage_cfg.actor.trainer.num_nodes,
             n_actor_gpus_per_worker=stage_cfg.actor.trainer.devices,
             wandb_api_key=cfg.wandb_api_key_file,
+            hf_token=cfg.huggingface_token_file,
         )
 
     def make_k8s_workflow(self) -> Workflow:
@@ -581,6 +590,7 @@ cat <<"EOF" | tee /config/config.yaml
 EOF
 nvidia-smi
 {('wandb login ' + self.wandb_api_key) if self.wandb_api_key else ''}
+{('huggingface-cli login ' + self.hf_token) if self.hf_token else ''}
 torchrun {self.critic_script} --config-path=/config --config-name=config.yaml \
     trainer.ppo.port={self.critic_port}
                     """,
@@ -609,6 +619,7 @@ cat <<"EOF" | tee /config/config.yaml
 EOF
 nvidia-smi
 {('wandb login ' + self.wandb_api_key) if self.wandb_api_key else ''}
+{('huggingface-cli login ' + self.hf_token) if self.hf_token else ''}
 torchrun {self.actor_script} --config-path=/config --config-name=config.yaml \
     remote_critic_rm.critic.ip={{{{inputs.parameters.critic_job_name}}}}-worker-0.{{{{inputs.parameters.critic_job_namespace}}}}.svc.cluster.local \
     remote_critic_rm.critic.port={self.critic_port}
@@ -653,6 +664,7 @@ class RLHFRewardModel(Stage):
     gpus_per_worker: int
     nemo_train_script: str = "/opt/NeMo-Aligner/examples/nlp/gpt/train_reward_model.py"
     wandb_api_key: Optional[str] = None
+    hf_token: Optional[str] = None
     stage_name: ClassVar[str] = "rlhf_rm"
 
     @classmethod
@@ -677,6 +689,7 @@ class RLHFRewardModel(Stage):
             gpus_per_worker=stage_cfg.trainer.devices,
             nemo_train_script=model_type_to_code_path[choice_model_type],
             wandb_api_key=cfg.wandb_api_key_file,
+            hf_token=cfg.huggingface_token_file,
         )
 
     def make_k8s_workflow(self) -> Workflow:
@@ -717,6 +730,7 @@ cat <<"EOF" | tee /config/config.yaml
 EOF
 nvidia-smi
 {('wandb login ' + self.wandb_api_key) if self.wandb_api_key else ''}
+{('huggingface-cli login ' + self.hf_token) if self.hf_token else ''}
 torchrun {self.nemo_train_script} --config-path=/config --config-name=config.yaml
                     """,
                 ],
