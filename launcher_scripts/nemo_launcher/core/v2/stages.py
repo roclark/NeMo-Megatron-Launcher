@@ -158,6 +158,7 @@ class Training(Stage):
             entrypoint="training-steps",
             namespace=self.cluster_cfg.namespace,
             volumes=vols,
+            service_account_name=self.cluster_cfg.service_account,
         ) as w:
             pytorchjob = create_pytorchjob_resource(
                 generate_name="training-",
@@ -166,6 +167,11 @@ class Training(Stage):
                 n_workers=self.n_workers,
                 gpus_per_worker=self.gpus_per_worker,
                 namespace=self.cluster_cfg.namespace,
+<<<<<<< HEAD
+                service_account_name=self.cluster_cfg.service_account,
+=======
+                pytorch_version=self.cluster_cfg.custom_pytorchjob_api_version,
+>>>>>>> ab1da0c9 (service)
                 env=self.env,
                 command=[
                     "bash",
@@ -255,6 +261,7 @@ class PEFT(Stage):
             entrypoint="peft-steps",
             namespace=self.cluster_cfg.namespace,
             volumes=vols,
+            service_account_name=self.cluster_cfg.service_account,
         ) as w:
             # TODO: to be backward compatible with current stage_cfg, "squad_data" dir is coded
             # here since it's not parametrized
@@ -425,6 +432,7 @@ class PileDataPreparation(Stage):
             entrypoint="data-steps",
             namespace=self.cluster_cfg.namespace,
             volumes=vols,
+            service_account_name=self.cluster_cfg.service_account,
         ) as w:
             # ++overide all parameters to avoid having to create config file in launcher & worker containers
             hydra_config_as_args = [
@@ -466,6 +474,8 @@ class PileDataPreparation(Stage):
                 command=["bash", "-euxc", commands_str],
                 volumes=self.cluster_cfg.volumes,
                 network_interfaces=self.cluster_cfg.ib_interfaces,
+                scheduler_name=self.cluster_cfg.scheduler,
+                mpijob_version=self.cluster_cfg.custom_mpijob_api_version,
                 capabilities=self.cluster_cfg.capabilities,
             )
             with Steps(name="data-steps") as s:
@@ -563,6 +573,7 @@ class RLHFPPO(Stage):
             entrypoint="rlhf-ppo-steps",
             namespace=self.cluster_cfg.namespace,
             volumes=vols,
+            service_account_name=self.cluster_cfg.service_account,
         ) as w:
             critic_job = create_pytorchjob_resource(
                 generate_name="critic-",
@@ -571,6 +582,7 @@ class RLHFPPO(Stage):
                 n_workers=self.n_critic_workers,
                 gpus_per_worker=self.n_critic_gpus_per_worker,
                 namespace=self.cluster_cfg.namespace,
+                pytorch_version=self.cluster_cfg.custom_pytorchjob_api_version,
                 env=self.env,
                 command=[
                     "bash",
@@ -599,6 +611,11 @@ torchrun {self.critic_script} --config-path=/config --config-name=config.yaml \
                 n_workers=self.n_actor_workers,
                 gpus_per_worker=self.n_actor_gpus_per_worker,
                 namespace=self.cluster_cfg.namespace,
+<<<<<<< HEAD
+                service_account_name=self.cluster_cfg.service_account,
+=======
+                pytorch_version=self.cluster_cfg.custom_pytorchjob_api_version,
+>>>>>>> ab1da0c9 (service)
                 env=self.env,
                 command=[
                     "bash",
@@ -699,6 +716,7 @@ class RLHFRewardModel(Stage):
             entrypoint="rlhf-rm-steps",
             namespace=self.cluster_cfg.namespace,
             volumes=vols,
+            service_account_name=self.cluster_cfg.service_account,
         ) as w:
             pytorchjob = create_pytorchjob_resource(
                 generate_name="rlhf-rm-",
@@ -707,6 +725,11 @@ class RLHFRewardModel(Stage):
                 n_workers=self.n_workers,
                 gpus_per_worker=self.gpus_per_worker,
                 namespace=self.cluster_cfg.namespace,
+<<<<<<< HEAD
+                service_account_name=self.cluster_cfg.service_account,
+=======
+                pytorch_version=self.cluster_cfg.custom_pytorchjob_api_version,
+>>>>>>> ab1da0c9 (service)
                 env=self.env,
                 command=[
                     "bash",
