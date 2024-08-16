@@ -165,6 +165,7 @@ class Training(Stage):
                 image=self.image,
                 image_pull_secret=self.cluster_cfg.pull_secret,
                 n_workers=self.n_workers,
+                scheduler_name=self.cluster_cfg.scheduler,
                 gpus_per_worker=self.gpus_per_worker,
                 namespace=self.cluster_cfg.namespace,
 <<<<<<< HEAD
@@ -290,6 +291,7 @@ class PEFT(Stage):
                 image=self.image,
                 image_pull_secret=self.cluster_cfg.pull_secret,
                 n_workers=self.n_workers,
+                scheduler_name=self.cluster_cfg.scheduler,
                 gpus_per_worker=self.gpus_per_worker,
                 namespace=self.cluster_cfg.namespace,
                 env=self.env,
@@ -580,6 +582,7 @@ class RLHFPPO(Stage):
                 image=self.image,
                 image_pull_secret=self.cluster_cfg.pull_secret,
                 n_workers=self.n_critic_workers,
+                scheduler_name=self.cluster_cfg.scheduler,
                 gpus_per_worker=self.n_critic_gpus_per_worker,
                 namespace=self.cluster_cfg.namespace,
                 pytorch_version=self.cluster_cfg.custom_pytorchjob_api_version,
@@ -609,6 +612,7 @@ torchrun {self.critic_script} --config-path=/config --config-name=config.yaml \
                 image=self.image,
                 image_pull_secret=self.cluster_cfg.pull_secret,
                 n_workers=self.n_actor_workers,
+                scheduler_name=self.cluster_cfg.scheduler,
                 gpus_per_worker=self.n_actor_gpus_per_worker,
                 namespace=self.cluster_cfg.namespace,
 <<<<<<< HEAD
@@ -723,6 +727,7 @@ class RLHFRewardModel(Stage):
                 image=self.image,
                 image_pull_secret=self.cluster_cfg.pull_secret,
                 n_workers=self.n_workers,
+                scheduler_name=self.cluster_cfg.scheduler,
                 gpus_per_worker=self.gpus_per_worker,
                 namespace=self.cluster_cfg.namespace,
 <<<<<<< HEAD

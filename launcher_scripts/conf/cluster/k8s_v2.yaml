@@ -24,3 +24,4 @@ dns_policy: null  # Specify a dnsPolicy to use in all pods, if necessary
 pull_secret: ngc-registry  # Kubernetes secret for the container registry to pull private containers.
 capabilities: []
 service_account: null # Optionally specify a serviceAccountName to use while running jobs. Set to "null" if no serviceAccountName is desired.
+scheduler: null  # Specify a custom kubernetes scheduler if different from default, such as "runai-scheduler". Leave as "null" if the default scheduler is desired.
