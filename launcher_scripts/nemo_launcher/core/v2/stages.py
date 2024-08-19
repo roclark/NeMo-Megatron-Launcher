@@ -168,11 +168,7 @@ class Training(Stage):
                 scheduler_name=self.cluster_cfg.scheduler,
                 gpus_per_worker=self.gpus_per_worker,
                 namespace=self.cluster_cfg.namespace,
-<<<<<<< HEAD
-                service_account_name=self.cluster_cfg.service_account,
-=======
                 pytorch_version=self.cluster_cfg.custom_pytorchjob_api_version,
->>>>>>> ab1da0c9 (service)
                 env=self.env,
                 command=[
                     "bash",
@@ -294,6 +290,7 @@ class PEFT(Stage):
                 scheduler_name=self.cluster_cfg.scheduler,
                 gpus_per_worker=self.gpus_per_worker,
                 namespace=self.cluster_cfg.namespace,
+                pytorch_version=self.cluster_cfg.custom_pytorchjob_api_version,
                 env=self.env,
                 command=[
                     "bash",
@@ -615,11 +612,7 @@ torchrun {self.critic_script} --config-path=/config --config-name=config.yaml \
                 scheduler_name=self.cluster_cfg.scheduler,
                 gpus_per_worker=self.n_actor_gpus_per_worker,
                 namespace=self.cluster_cfg.namespace,
-<<<<<<< HEAD
-                service_account_name=self.cluster_cfg.service_account,
-=======
                 pytorch_version=self.cluster_cfg.custom_pytorchjob_api_version,
->>>>>>> ab1da0c9 (service)
                 env=self.env,
                 command=[
                     "bash",
@@ -730,11 +723,7 @@ class RLHFRewardModel(Stage):
                 scheduler_name=self.cluster_cfg.scheduler,
                 gpus_per_worker=self.gpus_per_worker,
                 namespace=self.cluster_cfg.namespace,
-<<<<<<< HEAD
-                service_account_name=self.cluster_cfg.service_account,
-=======
                 pytorch_version=self.cluster_cfg.custom_pytorchjob_api_version,
->>>>>>> ab1da0c9 (service)
                 env=self.env,
                 command=[
                     "bash",

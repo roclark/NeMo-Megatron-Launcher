@@ -169,7 +169,7 @@ def create_pytorchjob_resource(
         ),
     )
     pytorch_job = KubeflowOrgV1PyTorchJob(
-        api_version=f"{constants.API_VERSION}",
+        api_version=pytorch_version if pytorch_version else f"{constants.API_VERSION}",
         kind=constants.PYTORCHJOB_KIND,
         metadata=V1ObjectMeta(generate_name=generate_name, namespace=namespace),
         spec=KubeflowOrgV1PyTorchJobSpec(
@@ -296,7 +296,7 @@ def create_mpijob_resource(
     launcher = replica_template(n_replicas=1, container=launch_container,)
     worker = replica_template(n_replicas=n_workers, container=worker_container,)
     mpijob = KubeflowOrgV1MPIJob(
-        api_version=f"{constants.API_VERSION}",
+        api_version=mpijob_version if mpijob_version else f"{constants.API_VERSION}",
         kind=constants.MPIJOB_KIND,
         metadata=V1ObjectMeta(generate_name=generate_name, namespace=namespace),
         spec=KubeflowOrgV1MPIJobSpec(
